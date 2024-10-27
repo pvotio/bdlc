@@ -1,0 +1,12 @@
+fast-to-sql==2.3.0
+fastparquet==2024.5.0
+fsspec==2024.10.0
+numpy==2.1.2
+oauthlib==3.2.2
+pandas==2.2.3
+pyodbc==5.2.0
+python-decouple==3.8
+requests==2.32.3
+requests-oauthlib==2.0.0
+sseclient-py==1.8.0
+SQLAlchemy==2.0.36
