@@ -59,7 +59,9 @@ class MSSQLDatabase(object):
         self.cnx.close()
         return df
 
-    def insert_table(self, df, table_name, if_exists="append", delete_prev_records=False):
+    def insert_table(
+        self, df, table_name, if_exists="append", delete_prev_records=False
+    ):
         """
         Insert a DataFrame into a database table, with optional behavior if the table exists.
 
