@@ -1,4 +1,3 @@
-import logging
 import urllib
 import warnings
 
@@ -9,10 +8,8 @@ from decouple import config
 from fast_to_sql import fast_to_sql
 from sqlalchemy import create_engine
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] [%(name)s:%(lineno)s]: %(message)s",
-)
+from config import logger
+
 warnings.filterwarnings("ignore")
 
 
@@ -35,7 +32,7 @@ class MSSQLDatabase(object):
         )
         self.cnx = None
 
-    def select_table(self, table_name, columns=None, where=None):
+    def select_table(self, query):
         """
         Select data from the specified table with optional columns.
 
@@ -44,18 +41,9 @@ class MSSQLDatabase(object):
         :return: DataFrame, containing the selected data.
         """
         self.reopen_connection()
-        if columns:
-            fcolumns = ",".join(columns)
-        else:
-            fcolumns = "*"
-
-        query = f"SELECT {fcolumns} FROM {table_name}"
-        if where:
-            query = f"{query} {where}"
-
-        logging.info(query)
+        logger.info(query)
         df = pd.read_sql(query, self.cnx)
-        logging.info(f"Selected {len(df)} rows from {table_name} table")
+        logger.debug(f"Selected {len(df)} rows")
         self.cnx.close()
         return df
 
@@ -73,9 +61,12 @@ class MSSQLDatabase(object):
         """
         self.reopen_connection()
         if delete_prev_records:
-            query = f"DELETE FROM {table_name}"
-            cursor = self.cnx.cursor()
-            cursor.execute(query)
+            try:
+                query = f"DELETE FROM {table_name}"
+                cursor = self.cnx.cursor()
+                cursor.execute(query)
+            except Exception as e:
+                logger.error(f"Error on deleting {table_name} rows: {e}")
 
         custom = {}
 
@@ -86,10 +77,10 @@ class MSSQLDatabase(object):
             elif df.dtypes[column] != np.int64 and df.dtypes[column] != np.float64:
                 custom[column] = "varchar(100)"
 
-        fast_to_sql.fast_to_sql(
+        fast_to_sql(
             df=df, name=table_name, conn=self.cnx, if_exists=if_exists, custom=custom
         )
-        logging.info(f"Inserted {len(df)} rows into {table_name} table")
+        logger.info(f"Inserted {len(df)} rows into {table_name} table")
         self.cnx.commit()
         self.cnx.close()
         return
