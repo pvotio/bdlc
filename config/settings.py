@@ -1,12 +1,20 @@
+import json
+
 from decouple import config
 
-ignore_columns_cast = lambda x: list(col for col in x.strip().split(",") if col and not col == " ")
+credentials_cast = lambda x: json.loads(x)
+list_cast = lambda x: [col.strip() for col in x.split(",") if col and col != " "]
 
 LOG_LEVEL = config("LOG_LEVEL", default="INFO")
-CREDENTIALS = config("CREDENTIALS")
-IS_IDENTIFIER_ISIN = config("IS_IDENTIFIER_ISIN", default=True, cast=bool)
+CREDENTIALS = config("CREDENTIALS", cast=credentials_cast)
+TI_USERNUMBER = config("TI_USERNUMBER", cast=int)
+TI_SERIALNUMBER = config("TI_SERIALNUMBER", cast=int)
+TI_WORKSTATION = config("TI_WORKSTATION", cast=int)
+IDENTIFIER_TYPE = config("IDENTIFIER_TYPE")
 DB_IDS_QUERY = config("DB_IDS_QUERY")
-IGNORE_COLUMNS = config("IGNORE_COLUMNS", cast=ignore_columns_cast)
+FIELDS = config("FIELDS", cast=list_cast)
+BBG_REPLY_TIMEOUT_MIN = config("BBG_REPLY_TIMEOUT_MIN", default=30, cast=int)
+IGNORE_COLUMNS = config("IGNORE_COLUMNS", default=[], cast=list_cast)
 OUTPUT_TABLE = config("OUTPUT_TABLE")
 INSERTER_MAX_RETRIES = config("INSERTER_MAX_RETRIES", default=3, cast=int)
 REQUEST_MAX_RETRIES = config("REQUEST_MAX_RETRIES", default=3, cast=int)

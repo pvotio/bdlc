@@ -45,7 +45,7 @@ class Session(OAuth2Session):
         :param request: prepared request object
         :return: response object from the API request
         """
-        logger.info(
+        logger.debug(
             "Request being sent to HTTP server: %s, %s",
             request.method,
             request.url,

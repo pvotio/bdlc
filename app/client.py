@@ -21,6 +21,9 @@ class Client:
         instruments: list,
         fields: list,
         session: Session,
+        ti_usernumber: int,
+        ti_serialnumber: int,
+        ti_workstation: int,
         reply_timeout_min: int,
         identifier_type: str,
     ):
@@ -35,6 +38,9 @@ class Client:
         self.output_key = None
         self.output_url = None
         self.session = session
+        self.ti_usernumber = ti_usernumber
+        self.ti_serialnumber = ti_serialnumber
+        self.ti_workstation = ti_workstation
         self.session_id = self._generate_session_id()
         self._get_catalog_id()
 
@@ -72,7 +78,7 @@ class Client:
                 )
                 return True
             else:
-                time.sleep(30)
+                time.sleep(60)
         else:
             logger.info(
                 f"Response not received within {self.reply_timeout_min} minutes. Exiting."
@@ -120,17 +126,19 @@ class Client:
             "description": "BBGCLIENT",
             "universe": {"@type": "Universe", "contains": universe},
             "fieldList": {"@type": "DataFieldList", "contains": fieldlist},
-            "trigger": trigger,
+            "trigger": {
+                "@type": "SubmitTrigger",
+            },
             "formatting": {
                 "@type": "MediaType",
                 "outputMediaType": "application/json",
             },
-            # 'terminalIdentity': {
-            #     '@type': 'BlpTerminalIdentity',
-            #     'userNumber': 12345678,
-            #     'serialNumber': 123,
-            #     'workStation': 12
-            # }
+            'terminalIdentity': {
+                '@type': 'BlpTerminalIdentity',
+                'userNumber': self.ti_usernumber,
+                'serialNumber': self.ti_serialnumber,
+                'workStation': self.ti_workstation
+            }
         }
         return request_payload
 
