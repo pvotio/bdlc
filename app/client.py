@@ -43,22 +43,29 @@ class Client:
         self.ti_workstation = ti_workstation
         self.session_id = self._generate_session_id()
         self._get_catalog_id()
+        logger.info(f"Client initialized with session ID: {self.session_id}")
 
     def data_request(self):
         url = urljoin(self.catalog_url, "requests/")
         request_payload = self._get_request_payload()
+        logger.info(f"Sending data request to URL: {url}")
+        logger.debug(f"Request payload: {json.dumps(request_payload, indent=2)}")
         response = self.session.post(url, json=request_payload)
         self.request_url = urljoin(self.HOST, response.headers["Location"])
         self.request_id = response.json()["request"]["identifier"]
+        logger.info(f"Data request sent, request ID: {self.request_id}")
 
     def listen(self):
+        logger.info("Listening for data response...")
         if self.__listen():
+            logger.info("Data response received, proceeding with download.")
             return self.__download()
-
+        logger.warning("Data response not received within the timeout period.")
         return
 
     def __listen(self):
         url = urljoin(self.catalog_url, "content/responses/")
+        logger.info(f"Listening on URL: {url}")
         params = {
             "prefix": self.session_id,
             "requestIdentifier": self.request_id,
@@ -79,13 +86,14 @@ class Client:
                 return True
             else:
                 time.sleep(60)
-        else:
-            logger.info(
-                f"Response not received within {self.reply_timeout_min} minutes. Exiting."
-            )
-            return False
+
+        logger.info(
+            f"Response not received within {self.reply_timeout_min} minutes. Exiting."
+        )
+        return False
 
     def __download(self):
+        logger.info(f"Downloading data from URL: {self.output_url}")
         with self.session.get(self.output_url, stream=True) as response:
             output_filename = self.output_key
             if "content-encoding" in response.headers:
@@ -98,11 +106,14 @@ class Client:
             data = uncompressed.read()
             df = pd.read_json(io.BytesIO(data))
 
-        logger.info("File downloaded: %s", output_filename)
+        logger.info(
+            f"File downloaded and data loaded into DataFrame: {output_filename}"
+        )
         return df
 
     def _get_catalog_id(self):
         url = urljoin(self.HOST, "/eap/catalogs/")
+        logger.info(f"Fetching catalog ID from URL: {url}")
         response = self.session.get(url)
         catalogs = response.json()["contains"]
         for catalog in catalogs:
@@ -111,6 +122,7 @@ class Client:
                 self.catalog_url = urljoin(
                     self.HOST, f"/eap/catalogs/{self.catalog_id}/"
                 )
+                logger.info(f"Scheduled catalog found with ID: {self.catalog_id}")
                 break
         else:
             logger.error("Scheduled catalog not in %r", response.json()["contains"])
@@ -119,7 +131,6 @@ class Client:
     def _get_request_payload(self):
         universe = self._get_universe_payload()
         fieldlist = self._get_fieldlist_payload()
-        trigger = self._get_trigger()
         request_payload = {
             "@type": "DataRequest",
             "name": self.session_id,
@@ -133,13 +144,16 @@ class Client:
                 "@type": "MediaType",
                 "outputMediaType": "application/json",
             },
-            'terminalIdentity': {
-                '@type': 'BlpTerminalIdentity',
-                'userNumber': self.ti_usernumber,
-                'serialNumber': self.ti_serialnumber,
-                'workStation': self.ti_workstation
-            }
+            "terminalIdentity": {
+                "@type": "BlpTerminalIdentity",
+                "userNumber": self.ti_usernumber,
+                "serialNumber": self.ti_serialnumber,
+                "workStation": self.ti_workstation,
+            },
         }
+        logger.debug(
+            f"Request payload created: {json.dumps(request_payload, indent=2)}"
+        )
         return request_payload
 
     def _get_universe_payload(self):
@@ -150,22 +164,26 @@ class Client:
 
     def _get_fieldlist_payload(self):
         payload = [self._get_fieldlist_structure(field) for field in self.fields]
+        logger.debug("Fieldlist payload: {payload}")
         return payload
 
-    def _get_trigger(self):
-        return urljoin(self.catalog_url, "triggers/executeNow")
-
     def _get_universe_structure(self, id: str):
-        return {
+        universe_structure = {
             "@type": "Identifier",
             "identifierType": self.identifier_type,
             "identifierValue": id,
         }
+        logger.debug(f"Universe structure for {id}: {universe_structure}")
+        return universe_structure
 
     @staticmethod
     def _get_fieldlist_structure(field):
-        return {"mnemonic": field}
+        field_structure = {"mnemonic": field}
+        logger.debug(f"Fieldlist structure: {field_structure}")
+        return field_structure
 
     @staticmethod
     def _generate_session_id():
-        return f"pa{str(uuid.uuid4())[:8]}"
+        session_id = f"pa{str(uuid.uuid4())[:8]}"
+        logger.debug(f"Generated session ID: {session_id}")
+        return session_id
