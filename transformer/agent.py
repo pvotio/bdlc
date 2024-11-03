@@ -23,7 +23,7 @@ class Agent:
             lambda x: str(int(x)) if pd.notna(x) else None
         )
         self.df["LAST_UPDATE"] = self.df.apply(self._reformat_last_update, axis=1)
-        self.df["LAST_TRADE"] = f"{self.df["LAST_TRADE_DATE"]} {self.df["LAST_TRADE_TIME"]}"  # noqa: E501
+        self.df["LAST_TRADE"] = f"{self.df['LAST_TRADE_DATE']} {self.df['LAST_TRADE_TIME']}"  # noqa: E501
         self.df["timestamp_read_utc"] = self.df.apply(self.to_date, axis=1)
         del self.df["LAST_TRADE"]
 

@@ -9,7 +9,7 @@ from transformer import Agent
 def load_tickers():
     try:
         loader = TickerLoader(settings.DB_IDS_QUERY)
-        instruments = loader.fetch()[:5]
+        instruments = loader.fetch()
         logger.info(
             f"Loaded instruments: {instruments[:3]}...",
         )
