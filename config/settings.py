@@ -3,7 +3,7 @@ import json
 from decouple import config
 
 credentials_cast = lambda x: json.loads(x)  # noqa: E731
-list_cast = lambda x: [col.strip() for col in x.split(",") if col and col != " "]  # noqa: E731
+list_cast = lambda x: [col.strip() for col in x.split(",") if col and col != " "]  # noqa: E731 E501
 
 LOG_LEVEL = config("LOG_LEVEL", default="INFO")
 CREDENTIALS = config("CREDENTIALS", cast=credentials_cast)

@@ -7,7 +7,8 @@ from config import logger
 
 
 class Session(OAuth2Session):
-    """Custom session class for making requests to a DL REST API using OAuth2 authentication."""
+    """Session class for making requests to a DL REST API
+    using OAuth2 authentication."""
 
     def __init__(self, client_secret, *args, **kwargs):
         """
@@ -28,7 +29,8 @@ class Session(OAuth2Session):
 
     def request(self, *args, **kwargs):
         """
-        Override the parent class method to handle TokenExpiredError by refreshing the token.
+        Override the parent class method to handle TokenExpiredError
+        by refreshing the token.
         :return: response object from the API request
         """
         try:

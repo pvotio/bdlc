@@ -33,13 +33,6 @@ class MSSQLDatabase(object):
         self.cnx = None
 
     def select_table(self, query):
-        """
-        Select data from the specified table with optional columns.
-
-        :param table_name: str, name of the table to select data from.
-        :param columns: list of str, columns to include in the result, default is None (all columns).
-        :return: DataFrame, containing the selected data.
-        """
         self.reopen_connection()
         logger.info(query)
         df = pd.read_sql(query, self.cnx)
@@ -50,15 +43,6 @@ class MSSQLDatabase(object):
     def insert_table(
         self, df, table_name, if_exists="append", delete_prev_records=False
     ):
-        """
-        Insert a DataFrame into a database table, with optional behavior if the table exists.
-
-        :param df: DataFrame, containing data to insert into the table.
-        :param table_name: str, name of the table to insert data into.
-        :param if_exists: str, behavior if the table exists, default is 'append'.
-        :param delete_prev_records: bool, delete existing rows in the table before inserting new records.
-
-        """
         self.reopen_connection()
         if delete_prev_records:
             try:
@@ -86,8 +70,5 @@ class MSSQLDatabase(object):
         return
 
     def reopen_connection(self):
-        """
-        Reopen the connection to the database if it is closed.
-        """
         if not self.cnx or not self.cnx.connected:
             self.cnx = pyodbc.connect(self.CNX_STRING)
