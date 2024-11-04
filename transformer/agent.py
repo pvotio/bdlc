@@ -20,7 +20,9 @@ class Agent:
 
     def reformat_date_columns(self):
         self.df["LAST_UPDATE"] = self.df.apply(self._reformat_last_update, axis=1)
-        self.df["LAST_TRADE"] = f"{self.df['LAST_TRADE_DATE']} {self.df['LAST_TRADE_TIME']}"  # noqa: E501
+        self.df["LAST_TRADE"] = (
+            f"{self.df['LAST_TRADE_DATE']} {self.df['LAST_TRADE_TIME']}"  # noqa: E501
+        )
         self.df["timestamp_read_utc"] = self.df.apply(self.to_date, axis=1)
         del self.df["LAST_TRADE"]
 
@@ -50,18 +52,18 @@ class Agent:
         return date.strftime("%Y-%m-%d %H:%M:%S") if date else None
 
     @staticmethod
-    def _reformat_last_update(row):        
+    def _reformat_last_update(row):
         x, y = row["LAST_UPDATE"], row["LAST_UPDATE_DT"]
         if not isinstance(x, str) and not isinstance(y, str):
             return None
-        
+
         if pd.isna(x):
             x = ""
         elif isinstance(x, float):
             x = str(int(x))
         elif isinstance(x, int):
             x = str(x)
-        
+
         if ":" not in x:
             return Agent._parse_date(x, ["%Y%m%d"])
         else:
