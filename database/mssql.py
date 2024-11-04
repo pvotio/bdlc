@@ -56,7 +56,7 @@ class MSSQLDatabase(object):
 
         for column in df.columns.tolist():
             if "timestamp" in column.lower():
-                continue
+                custom[column] = "datetime"
 
             elif df.dtypes[column] != np.int64 and df.dtypes[column] != np.float64:
                 custom[column] = "varchar(100)"
