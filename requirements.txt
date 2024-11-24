@@ -10,3 +10,4 @@ requests==2.32.3
 requests-oauthlib==2.0.0
 sseclient-py==1.8.0
 SQLAlchemy==2.0.36
+azure-identity==1.19.0

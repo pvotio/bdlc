@@ -1,36 +1,55 @@
-import urllib
+import struct
 import warnings
 
 import numpy as np
 import pandas as pd
 import pyodbc
-from decouple import config
+from azure.identity import DefaultAzureCredential
 from fast_to_sql import fast_to_sql
-from sqlalchemy import create_engine
 
-from config import logger
+from config import logger, settings
 
 warnings.filterwarnings("ignore")
 
 
+def pyodbc_attrs(access_token: str) -> dict:
+    SQL_COPT_SS_ACCESS_TOKEN = 1256
+    token_bytes = bytes(access_token, "utf-8")
+    exp_token = b""
+    for i in token_bytes:
+        exp_token += bytes({i}) + bytes(1)
+    return {SQL_COPT_SS_ACCESS_TOKEN: struct.pack("=i", len(exp_token)) + exp_token}
+
+
 class MSSQLDatabase(object):
-    SERVER = config("MSSQL_SERVER", cast=str)
-    DATABASE = config("MSSQL_DATABASE", cast=str)
-    USERNAME = config("MSSQL_USERNAME", cast=str)
-    PASSWORD = config("MSSQL_PASSWORD", cast=str)
-
-    CNX_STRING = (
-        "DRIVER={ODBC Driver 18 for SQL Server};"
-        f"SERVER={SERVER};DATABASE={DATABASE};UID={USERNAME};PWD={PASSWORD}"
-    )
-
-    PARSED_CNX_URL = urllib.parse.quote_plus(CNX_STRING)
+    AD_LOGIN = settings.MSSQL_AD_LOGIN
+    SERVER = settings.MSSQL_SERVER
+    DATABASE = settings.MSSQL_DATABASE
+    if not AD_LOGIN:
+        USERNAME = settings.MSSQL_USERNAME
+        PASSWORD = settings.MSSQL_PASSWORD
 
     def __init__(self):
-        self.engine = create_engine(
-            f"mssql+pyodbc:///?odbc_connect={self.PARSED_CNX_URL}"
-        )
+        self.cnx_kwargs = {}
+
+        if not self.AD_LOGIN:
+            self.cnx_str = (
+                "DRIVER={ODBC Driver 18 for SQL Server};"
+                f"SERVER={self.SERVER};DATABASE={self.DATABASE};UID={self.USERNAME};PWD={self.PASSWORD}"
+            )
+        else:
+            token = self.fecth_token()
+            self.cnx_kwargs["attrs_before"] = pyodbc_attrs(token)
+            self.cnx_str = (
+                "DRIVER={ODBC Driver 18 for SQL Server};"
+                f"SERVER={self.SERVER};DATABASE={self.DATABASE};Encrypt=yes"
+            )
+
         self.cnx = None
+
+    def reopen_connection(self):
+        if not self.cnx or not self.cnx.connected:
+            self.cnx = pyodbc.connect(self.cnx_str, **self.cnx_kwargs)
 
     def select_table(self, query):
         self.reopen_connection()
@@ -69,6 +88,8 @@ class MSSQLDatabase(object):
         self.cnx.close()
         return
 
-    def reopen_connection(self):
-        if not self.cnx or not self.cnx.connected:
-            self.cnx = pyodbc.connect(self.CNX_STRING)
+    @staticmethod
+    def fecth_token():
+        credential = DefaultAzureCredential(exclude_shared_token_cache_credential=True)
+        token = credential.get_token("https://database.windows.net/.default").token
+        return token
