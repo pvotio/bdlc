@@ -35,7 +35,8 @@ class MSSQLDatabase(object):
         if not self.AD_LOGIN:
             self.cnx_str = (
                 "DRIVER={ODBC Driver 18 for SQL Server};"
-                f"SERVER={self.SERVER};DATABASE={self.DATABASE};UID={self.USERNAME};PWD={self.PASSWORD}"
+                f"SERVER={self.SERVER};DATABASE={self.DATABASE};"
+                f"UID={self.USERNAME};PWD={self.PASSWORD}"
             )
         else:
             token = self.fecth_token()
