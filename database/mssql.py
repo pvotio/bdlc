@@ -31,7 +31,6 @@ class MSSQLDatabase(object):
 
     def __init__(self):
         self.cnx_kwargs = {}
-
         if not self.AD_LOGIN:
             self.cnx_str = (
                 "DRIVER={ODBC Driver 18 for SQL Server};"
@@ -46,22 +45,33 @@ class MSSQLDatabase(object):
                 f"SERVER={self.SERVER};DATABASE={self.DATABASE};Encrypt=yes"
             )
 
-        self.cnx = None
-
+    def _get_connection(self):
+        return pyodbc.connect(self.cnx_str, **self.cnx_kwargs)
+    
     def reopen_connection(self):
-        if not self.cnx or not self.cnx.connected:
-            self.cnx = pyodbc.connect(self.cnx_str, **self.cnx_kwargs)
+        try:
+            if hasattr(self, "cnx") and self.cnx:
+                self.cnx.close()
+        except Exception as e:
+            logger.warning(f"Error closing stale connection: {e}")
+
+        self.cnx = self._get_connection()
 
     def select_table(self, query):
         self.reopen_connection()
         logger.info(query)
-        df = pd.read_sql(query, self.cnx)
-        logger.debug(f"Selected {len(df)} rows")
-        self.cnx.close()
-        return df
+        try:
+            df = pd.read_sql(query, self.cnx)
+            logger.debug(f"Selected {len(df)} rows")
+            return df
+        except Exception as e:
+            logger.error(f"Error executing SELECT query: {e}")
+            raise
+        finally:
+            self.cnx.close()
 
     def insert_table(
-        self, df, table_name, if_exists="append", delete_prev_records=False
+        self, df, table_name, if_exists="append", delete_prev_records=True
     ):
         self.reopen_connection()
         if delete_prev_records:
@@ -81,13 +91,17 @@ class MSSQLDatabase(object):
             elif df.dtypes[column] != np.int64 and df.dtypes[column] != np.float64:
                 custom[column] = "varchar(100)"
 
-        fast_to_sql(
-            df=df, name=table_name, conn=self.cnx, if_exists=if_exists, custom=custom
-        )
-        logger.info(f"Inserted {len(df)} rows into {table_name} table")
-        self.cnx.commit()
-        self.cnx.close()
-        return
+        try:
+            fast_to_sql(
+                df=df, name=table_name, conn=self.cnx, if_exists=if_exists, custom=custom
+            )
+            logger.info(f"Inserted {len(df)} rows into {table_name} table")
+            self.cnx.commit()
+        except Exception as e:
+            logger.error(f"Error inserting into table {table_name}: {e}")
+            raise
+        finally:
+            self.cnx.close()
 
     @staticmethod
     def fecth_token():
