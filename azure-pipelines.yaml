@@ -1,0 +1,38 @@
+# Docker
+# Build a Docker image
+# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+
+trigger:
+  - main
+
+resources:
+  - repo: self
+
+variables:
+  dockerRegistryServiceConnection: 'pa-azure-container-registry' 
+  imageRepository: 'pa-bbg-client'
+  dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
+  tag: $[format('{0:yyyy}.{0:MM}{0:dd}', pipeline.startTime)]
+  buildId: $(Build.BuildId)
+
+stages:
+  - stage: build_deploy
+    displayName: Build & Deploy pa-bbg-client
+    jobs:
+      - job: build_deploy
+        displayName: Build & Deploy pa-bbg-client
+        pool:
+          name: devops-agent-pool
+          #vmImage: ubuntu-latest
+        steps:
+          - task: Docker@2
+            displayName: Build an image
+            inputs:
+              containerRegistry: $(dockerRegistryServiceConnection)
+              repository: $(imageRepository)
+              command: buildAndPush
+              dockerfile: $(dockerfilePath)
+              buildContext: '$(System.DefaultWorkingDirectory)/'
+              tags: |
+                latest
+                $(tag).$(buildId)
