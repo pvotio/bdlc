@@ -47,7 +47,7 @@ class MSSQLDatabase(object):
 
     def _get_connection(self):
         return pyodbc.connect(self.cnx_str, **self.cnx_kwargs)
-    
+
     def reopen_connection(self):
         try:
             if hasattr(self, "cnx") and self.cnx:
@@ -93,7 +93,11 @@ class MSSQLDatabase(object):
 
         try:
             fast_to_sql(
-                df=df, name=table_name, conn=self.cnx, if_exists=if_exists, custom=custom
+                df=df,
+                name=table_name,
+                conn=self.cnx,
+                if_exists=if_exists,
+                custom=custom,
             )
             logger.info(f"Inserted {len(df)} rows into {table_name} table")
             self.cnx.commit()
