@@ -2,6 +2,8 @@ import datetime
 
 import pandas as pd
 
+from config import logger, settings
+
 
 class Agent:
 
@@ -10,10 +12,38 @@ class Agent:
         self.ignore_columns = ignore_columns
 
     def transform(self):
+        self.add_empty_columns()
         self.reformat_date_columns()
         self.add_timestamp()
         self.remove_columns()
         return self.df
+
+    def add_empty_columns(self):
+        df_columns = list(self.df.columns)
+        logger.debug(f"Raw BBG dataframe columns: {', '.join(df_columns)}")
+        new_columns_set = self.find_columns_intersection(df_columns)
+        self.df = self.df.reindex(columns=new_columns_set)
+        return
+
+    def find_columns_intersection(self, df_columns):
+        """E.G. @@A is Tagged column. @@ is used to tag columns to bypass BBG API but only included
+        in the output table acting as a empty columns and placeholder for further post processing
+        """
+
+        def find_unexpected_columns_range(df_columns, not_tagged_columns):
+            for i in range(len(df_columns)):
+                if df_columns[i:] == not_tagged_columns:
+                    return (0, i - 1)
+            else:
+                return False
+
+        not_tagged_columns = [
+            col for col in settings.FIELDS if not col.startswith("@@")
+        ]
+        i_a, i_b = find_unexpected_columns_range(df_columns, not_tagged_columns)
+        return list(
+            df_columns[i_a:i_b] + [col.replace("@@", "") for col in settings.FIELDS]
+        )
 
     def remove_columns(self):
         self.df.drop(columns=self.ignore_columns, inplace=True)

@@ -163,7 +163,11 @@ class Client:
         return payload
 
     def _get_fieldlist_payload(self):
-        payload = [self._get_fieldlist_structure(field) for field in self.fields]
+        payload = [
+            self._get_fieldlist_structure(field)
+            for field in self.fields
+            if not field.startswith("@@")
+        ]
         logger.debug("Fieldlist payload: {payload}")
         return payload
 
