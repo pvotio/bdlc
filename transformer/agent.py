@@ -33,7 +33,7 @@ class Agent:
         def find_unexpected_columns_range(df_columns, not_tagged_columns):
             for i in range(len(df_columns)):
                 if df_columns[i:] == not_tagged_columns:
-                    return (0, i - 1)
+                    return (0, i)
             else:
                 return False
 
