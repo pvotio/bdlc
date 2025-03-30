@@ -18,6 +18,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
+# Upgrade pip to the latest version
+RUN pip install --upgrade pip
+
 ADD requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
@@ -27,3 +30,4 @@ RUN useradd -m client
 USER client
 
 CMD [ "python", "main.py" ]
+
