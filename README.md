@@ -22,7 +22,7 @@
 1. Clone the repository:
 
     ```
-    git clone https://github.com/alimghmi/bbg-client.git
+    git clone https://github.com/pvotio/bbg-client.git
     cd bbg-client
     ```
 
