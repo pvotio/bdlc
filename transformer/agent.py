@@ -26,8 +26,9 @@ class Agent:
         return
 
     def find_columns_intersection(self, df_columns):
-        """E.G. @@A is Tagged column. @@ is used to tag columns to bypass BBG API but only included
-        in the output table acting as a empty columns and placeholder for further post processing
+        """E.G. @@A is Tagged column. @@ is used to tag columns to bypass BBG
+        API but only included in the output table acting as a empty
+        columns and placeholder for further post processing
         """
 
         def find_unexpected_columns_range(df_columns, not_tagged_columns):
