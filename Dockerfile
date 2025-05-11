@@ -30,3 +30,4 @@ RUN useradd -m client
 USER client
 
 CMD [ "python", "main.py" ]
+
