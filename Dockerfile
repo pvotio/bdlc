@@ -1,4 +1,4 @@
-FROM python:3.13.2-slim-bullseye
+FROM python:3.13.6-slim-bullseye
 
 RUN mkdir /opt/app
 WORKDIR /opt/app
